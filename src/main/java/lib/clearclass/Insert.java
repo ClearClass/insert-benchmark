@@ -7,11 +7,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.Query;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.cfg.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+
+import lib.clearclass.entity.Word;
 
 public class Insert {
 	private static int N = 1000; // количество строк для вставки
@@ -76,8 +80,8 @@ public class Insert {
 		}
 	}
 	
-	/** Вставка строк c использованием Hibernate */
-	public static double m4(Connection conn) {
+	// вспомогательный метод для m4(), m5(), использующих Hibernate
+	private static SessionFactory getSessionFactory(Connection conn) {
 		String connName = conn.getClass().getName();
 		String dialect;
 		if(connName.equals("org.postgresql.jdbc.PgConnection")) 
@@ -87,11 +91,15 @@ public class Insert {
 		else 
 			throw new RuntimeException("Unknown dialect for connection : " + connName);
 		
-		SessionFactory sf = new Configuration()
-			.addAnnotatedClass(lib.clearclass.Word.class)
+		return new Configuration()
+			.addAnnotatedClass(Word.class)
 			.setProperty("hibernate.dialect", "org.hibernate.dialect." + dialect)
 			.buildSessionFactory();
-				
+	}
+	
+	/** Вставка строк c использованием Hibernate-ORM */
+	public static double m4(Connection conn) {
+		SessionFactory sf = getSessionFactory(conn);
 		StatelessSession session = sf.openStatelessSession(conn);
 		
 		Word[] words = new Word[N];
@@ -110,8 +118,28 @@ public class Insert {
 		return dt;
 	}
 	
+	/** Вставка строк c использованием Hibernate-NativeQuery */
+	public static double m5(Connection conn) {
+		SessionFactory sf = getSessionFactory(conn);
+		StatelessSession session = sf.openStatelessSession(conn);
+		
+		long t1 = System.nanoTime();
+		session.beginTransaction();
+		Query query = session.createNativeQuery("INSERT INTO words(word) VALUES (:word)");
+		for (int i = 0; i < N; i++){
+			query.setParameter("word", "погадка"+i);
+			query.executeUpdate();
+		}
+		session.getTransaction().commit();
+		long t2 = System.nanoTime();
+		session.close();
+		sf.close();
+		double dt = (t2-t1); dt/=1e6;
+		return dt;
+	}
+	
 	/** Вставка строк c использованием JdbcTemplate */
-	public static double m5(Connection conn) throws SQLException {
+	public static double m6(Connection conn) throws SQLException {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true));
 		String query = "INSERT INTO words(word) VALUES(?);";
 		List<Object[]> queryData = new ArrayList<>();
