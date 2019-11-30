@@ -1,0 +1,12 @@
+images/Thumbs.db
+
+# Maven 
+target/
+
+# Eclipse project file
+.settings/
+.classpath
+.project
+
+# H2 database file
+dbfile.mv.db
