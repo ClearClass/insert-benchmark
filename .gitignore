@@ -5,3 +5,6 @@ target/
 .settings/
 .classpath
 .project
+
+# H2 database file
+dbfile.mv.db

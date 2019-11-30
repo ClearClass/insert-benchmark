@@ -1,38 +1,13 @@
 package lib.clearclass;
 
 import java.sql.*;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import lib.clearclass.utils.*;
 
-@Entity
-@Table(name = "words")
-class Word {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	private String word;
-	
-	public Word(String word) {
-		this.word = word;
-	}
-	
-	public Word() {}
-
-	@Override
-	public String toString() {
-		return word;
-	}
-}
-
 public class Main {
-	// условное обозначение способа вставки (всего 6 способов)
-	static String[] x = {"<Stm>..<Stm>", "<Stm>", "<PrStm>", "<Batch>", "<Hibernate>", "<JdbcTempl>"};
+	// условное обозначение способа вставки (всего 7 способов)
+	static String[] x = {"<Stm>..<Stm>", "<Stm>", "<PrStm>", "<Batch>", "<Hib-ORM>", "<Hib-SQL>", "<JdbcTempl>"};
 	// результаты измерений (в мс) для каждого способа
-	static double[] y = new double[6];
+	static double[] y = new double[7];
 
 	public static void main(String[] args) {
 		System.out.println("Вставка 1000 строк:");
@@ -63,10 +38,14 @@ public class Main {
 				System.out.println(String.format("%-37s %1.1f мс", "Внутри транзакции, PreSt, batch-режим:", y[3]));
 				
 				y[4] = Insert.m4(conn);
-				System.out.println(String.format("%-38s %1.1f мс", "C использованием Hibernate: ", y[4]));
+				System.out.println(String.format("%-38s %1.1f мс", "C использованием Hibernate-ORM: ", y[4]));
 				
 				y[5] = Insert.m5(conn);
-				System.out.println(String.format("%-38s %1.1f мс", "C использованием JdbcTemplate: ", y[5]));
+				System.out.println(String.format("%-38s %1.1f мс", "C использованием Hibernate-NativeQuery: ", y[5]));
+				
+				y[6] = Insert.m6(conn);
+				System.out.println(String.format("%-38s %1.1f мс", "C использованием JdbcTemplate: ", y[6]));
+				
 				stm.execute("DROP TABLE words;");
 				conn.commit();
 			} catch (SQLException e) {
